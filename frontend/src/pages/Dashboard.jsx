@@ -1,23 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { DndContext, closestCorners } from '@dnd-kit/core';
 import Column from '../components/Column';
 
-const Dashboard = () => {
-  // Mock data for initial tasks
-  const initialTasks = {
-    todo: [
-      { id: '1', title: 'Setup project repository', description: 'Initialize git and push to GitHub.', priority: 'High', deadline: '2025-09-25' },
-      { id: '2', title: 'Design the database schema', description: 'Plan the tables for users and tasks.', priority: 'Medium', deadline: '2025-09-26' },
-    ],
-    inProgress: [
-      { id: '3', title: 'Develop login UI', description: 'Create the login form component.', priority: 'High', deadline: '2025-09-24' },
-    ],
-    done: [
-      { id: '4', title: 'Create React App', description: 'Setup the initial frontend boilerplate.', priority: 'Low', deadline: '2025-09-23' },
-    ],
-  };
-
-  const [tasks, setTasks] = useState(initialTasks);
+// The component now accepts props: `tasks` and `setTasks`
+const Dashboard = ({ tasks, setTasks }) => {
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
@@ -49,16 +35,19 @@ const Dashboard = () => {
       }
     });
     
-    if (!sourceColumn || !destinationColumn) return;
+    if (!sourceColumn || !destinationColumn || !draggedTask) return;
 
+    // Use the `setTasks` function passed from the parent
     setTasks(prevTasks => {
       const newTasks = { ...prevTasks };
       
+      // Remove task from the source column
       const sourceTasks = [...newTasks[sourceColumn]];
       const taskIndex = sourceTasks.findIndex(task => task.id === activeId);
       sourceTasks.splice(taskIndex, 1);
       newTasks[sourceColumn] = sourceTasks;
 
+      // Add task to the destination column
       const destTasks = [...newTasks[destinationColumn]];
       const overTaskIndex = destTasks.findIndex(task => task.id === overId);
       
@@ -73,13 +62,10 @@ const Dashboard = () => {
     });
   };
 
-  // --- UPDATED PART IS BELOW ---
   return (
-    // The main div is now simplified and theme-aware
     <div className="text-slate-900 dark:text-white">
       <h1 className="text-4xl font-bold mb-8">Project Dashboard</h1>
       <DndContext collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
-        {/* The flex container is now responsive */}
         <div className="flex flex-col md:flex-row gap-8">
           <Column id="todo" title="To Do" tasks={tasks.todo} />
           <Column id="inProgress" title="In Progress" tasks={tasks.inProgress} />

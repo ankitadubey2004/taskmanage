@@ -1,19 +1,55 @@
-import React from 'react';
-import { Outlet } from 'react-router-dom';
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-const Layout = () => {
+// App.jsx - FINAL SETUP
+
+import React, { useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+
+// Import your components
+import Layout from "./components/Layout";
+import LoginPage from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import RegisterPage from './pages/Register';
+
+function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
+
+  const handleLoginSuccess = () => {
+    setIsLoggedIn(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setIsLoggedIn(false);
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-white dark:bg-slate-900">
-      <Navbar />
-      <main className="flex-grow container mx-auto p-4 md:p-8">
-        <Outlet />
-      </main>
+    <Routes>
+      {/* ========================================================== */}
+      {/* Public Routes (Visible to everyone)                       */}
+      {/* ========================================================== */}
+      <Route
+        path="/login"
+        element={<LoginPage onLoginSuccess={handleLoginSuccess} />}
+      />
+      {/* CHANGE: Add the route for the Register page here */}
+      <Route
+        path="/register"
+        element={<RegisterPage />}
+      />
 
-      <Footer />
+      {/* ========================================================== */}
+      {/* Protected Routes (Visible only after login)               */}
+      {/* ========================================================== */}
+      <Route
+        path="/"
+        element={isLoggedIn ? <Layout onLogout={handleLogout} /> : <Navigate to="/login" />}
+      >
+        <Route index element={<Navigate to="/dashboard" />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        {/* Add other protected pages here */}
+      </Route>
 
-    </div>
+    </Routes>
   );
-};
+}
 
-export default Layout;
+export default App;
