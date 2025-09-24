@@ -1,52 +1,72 @@
-// src/components/Sidebar.jsx - UPDATED
+// src/components/Sidebar.jsx
 
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { HomeIcon, ClipboardDocumentListIcon, CogIcon, ArrowLeftOnRectangleIcon } from '@heroicons/react/24/outline';
+import {
+  HomeIcon,
+  ClipboardDocumentListIcon,
+  Cog6ToothIcon, // Better looking cog icon
+  ArrowLeftOnRectangleIcon,
+  TicketIcon, // A cute icon for the brand
+} from '@heroicons/react/24/outline';
 
-// 1. Accept the 'onLogout' prop here
 const Sidebar = ({ onLogout }) => {
-  const activeLinkStyle = {
-    backgroundColor: '#3b82f6',
-    color: 'white',
-  };
+  const activeClass = "bg-blue-500 text-white";
+  const inactiveClass = "hover:bg-slate-200 dark:hover:bg-slate-700";
 
   return (
-    <aside className="w-64 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white flex flex-col p-4">
-      <div className="text-2xl font-bold mb-10 text-center">
-        MiniJira
+    <aside className="w-64 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white flex flex-col p-4 border-r border-slate-200 dark:border-slate-700">
+      
+      {/* Logo and App Name */}
+      <div className="flex items-center gap-3 mb-10 px-2">
+        <TicketIcon className="w-8 h-8 text-blue-500" />
+        <span className="text-2xl font-bold">MiniJira</span>
       </div>
 
+      {/* Navigation Links */}
       <nav className="flex-grow">
-        <ul>
-          {/* Your NavLink items like Dashboard, My Tasks, etc. */}
+        <ul className="space-y-2">
           <li>
-            <NavLink to="/dashboard" style={({ isActive }) => (isActive ? activeLinkStyle : undefined)} className="...">
+            <NavLink
+              to="/dashboard"
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${isActive ? activeClass : inactiveClass}`
+              }
+            >
               <HomeIcon className="w-6 h-6" />
               <span>Dashboard</span>
             </NavLink>
           </li>
-          <li className="mt-2">
-             <NavLink to="/tasks" style={({ isActive }) => (isActive ? activeLinkStyle : undefined)} className="...">
-               <ClipboardDocumentListIcon className="w-6 h-6" />
-               <span>My Tasks</span>
-             </NavLink>
+          <li>
+            <NavLink
+              to="/tasks"
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${isActive ? activeClass : inactiveClass}`
+              }
+            >
+              <ClipboardDocumentListIcon className="w-6 h-6" />
+              <span>My Tasks</span>
+            </NavLink>
           </li>
-          <li className="mt-2">
-             <NavLink to="/settings" style={({ isActive }) => (isActive ? activeLinkStyle : undefined)} className="...">
-               <CogIcon className="w-6 h-6" />
-               <span>Settings</span>
-             </NavLink>
+          <li>
+            <NavLink
+              to="/settings"
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${isActive ? activeClass : inactiveClass}`
+              }
+            >
+              <Cog6ToothIcon className="w-6 h-6" />
+              <span>Settings</span>
+            </NavLink>
           </li>
         </ul>
       </nav>
 
       {/* User/Logout Section */}
       <div className="border-t border-slate-300 dark:border-slate-700 pt-4">
-        {/* 2. Attach the onLogout function to the button's onClick event */}
         <button
           onClick={onLogout}
-          className="flex items-center w-full gap-3 px-4 py-2 rounded-lg text-left hover:bg-red-500 hover:text-white transition-colors"
+          className="flex items-center w-full gap-3 px-4 py-2 rounded-lg text-left text-red-500 hover:bg-red-500 hover:text-white transition-colors"
         >
           <ArrowLeftOnRectangleIcon className="w-6 h-6" />
           <span>Logout</span>
