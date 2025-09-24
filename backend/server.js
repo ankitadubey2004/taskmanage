@@ -45,8 +45,9 @@ mongoose.connect(DB_URL)
 // Step 7: Define API Routes
 // Koi bhi request jo '/api/auth' se start hogi, woh 'routes/auth.js' file handle karegi
 app.use('/api/auth', require('./routes/auth'));
-// Aap yahan aur bhi routes add kar sakte hain
-// app.use('/api/tasks', require('./routes/tasks'));
+
+// Add the task routes here
+app.use('/api/tasks', require('./routes/tasks'));
 
 // Basic route to check if the server is alive
 app.get('/', (req, res) => {
