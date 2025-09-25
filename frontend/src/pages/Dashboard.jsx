@@ -6,11 +6,7 @@ import Column from "../components/Column";
 import AddTaskModal from "../components/AddTaskModal.jsx";
 
 const Dashboard = () => {
-  const [tasks, setTasks] = useState({
-    "To Do": [],
-    "In Progress": [],
-    Completed: [],
-  });
+  const [tasks, setTasks] = useState({ "To Do": [], "In Progress": [], Completed: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -28,17 +24,13 @@ const Dashboard = () => {
 
       const categorizedTasks = { "To Do": [], "In Progress": [], Completed: [] };
       res.data.forEach((task) => {
-        if (categorizedTasks[task.status]) {
-          categorizedTasks[task.status].push(task);
-        }
+        if (categorizedTasks[task.status]) categorizedTasks[task.status].push(task);
       });
 
       setTasks(categorizedTasks);
     } catch (err) {
       console.error(err);
-      setError(
-        "Failed to fetch tasks. Please ensure you are logged in and the server is running."
-      );
+      setError("Failed to fetch tasks. Ensure you are logged in and the server is running.");
     } finally {
       setLoading(false);
     }
@@ -60,16 +52,13 @@ const Dashboard = () => {
       if (!token) throw new Error("No token found. Please log in.");
 
       const taskWithStatus = { ...newTask, status: columnId };
-      const res = await axios.post(
-        "http://localhost:5000/api/tasks",
-        taskWithStatus,
-        { headers: { "x-auth-token": token } }
-      );
+      const res = await axios.post("http://localhost:5000/api/tasks", taskWithStatus, {
+        headers: { "x-auth-token": token },
+      });
 
-      const savedTask = res.data;
       setTasks((prev) => ({
         ...prev,
-        [columnId]: [...prev[columnId], savedTask],
+        [columnId]: [...prev[columnId], res.data],
       }));
 
       closeModal();
@@ -79,120 +68,146 @@ const Dashboard = () => {
     }
   };
 
+  // src/pages/Dashboard.jsx
+
   const handleDeleteTask = async (columnId, taskId) => {
+    if (!window.confirm("Are you sure you want to delete this task?")) return;
+
+    // Optimistically remove the task from the UI
+    setTasks((prev) => ({
+      ...prev,
+      [columnId]: prev[columnId].filter((t) => t._id !== taskId),
+    }));
+
     try {
       const token = localStorage.getItem("token");
-      if (!token) throw new Error("No token found. Please log in.");
+      if (!token) {
+        setError("Authentication failed. Please log in again.");
+        return;
+      }
 
       await axios.delete(`http://localhost:5000/api/tasks/${taskId}`, {
         headers: { "x-auth-token": token },
       });
-
-      setTasks((prev) => ({
-        ...prev,
-        [columnId]: prev[columnId].filter((t) => t._id !== taskId),
-      }));
+      console.log("Task deleted successfully!"); // Success message
     } catch (err) {
-      console.error(err);
-      setError("Failed to delete task.");
+      console.error("Failed to delete task:", err.response ? err.response.data : err.message);
+      setError("Failed to delete task. Reverting changes.");
+      // Revert the UI by re-fetching all tasks
+      fetchTasks();
     }
   };
+  // In src/pages/Dashboard.jsx
+
+  // In src/pages/Dashboard.jsx
 
   const handleDragEnd = async ({ active, over }) => {
-  if (!over) return;
+    // Add this crucial check to ensure the drag operation was valid
+    // It prevents the function from running on a simple click.
 
-  const activeId = active.id; // dragged task _id
-  const overId = over.id;     // could be taskId OR columnId
-
-  // Find which column the active task came from
-  let sourceColumnId = null;
-  for (const [colId, colTasks] of Object.entries(tasks)) {
-    if (colTasks.find(task => task._id === activeId)) {
-      sourceColumnId = colId;
-      break;
+    if (!active || !over || active.id === over.id) {
+      return;
     }
-  }
-  if (!sourceColumnId) {
-    console.error("Task not found in source column.", activeId);
-    return;
-  }
 
-  // CASE 1: Dropped on another column (empty space)
-  if (["To Do", "In Progress", "Completed"].includes(overId)) {
-    if (sourceColumnId !== overId) {
-      const taskToMove = tasks[sourceColumnId].find(t => t._id === activeId);
+    const taskId = active.id;
+    const targetColumnId = over.id; // This is now a plain string like 'To Do'
 
-      // Optimistically update state
-      setTasks(prev => {
-        const newTasks = { ...prev };
-        newTasks[sourceColumnId] = newTasks[sourceColumnId].filter(t => t._id !== activeId);
-        newTasks[overId] = [...newTasks[overId], taskToMove];
+    // Find the original column and the task object
+    let sourceColumnId = null;
+    let taskToMove = null;
+
+    for (const column in tasks) {
+      const foundTask = tasks[column].find((t) => String(t._id) === String(taskId));
+      if (foundTask) {
+        sourceColumnId = column;
+        taskToMove = foundTask;
+        break;
+      }
+    }
+
+    // If we can't find the task or its source column, exit
+    if (!taskToMove || !sourceColumnId) {
+      return;
+    }
+
+    // Case 1: The task is dropped in the same column (for sorting)
+    // This logic is currently not implemented in the provided code,
+    // but it would go here if you wanted to reorder tasks within a column.
+    if (sourceColumnId === targetColumnId) {
+      // For now, we'll just return as there's no sorting logic in place.
+      return;
+    } else {
+      // Case 2: The task is dropped in a different column (for status change)
+      const originalTasksState = { ...tasks };
+
+      // Optimistically update the UI to make the change feel instant
+      setTasks((prev) => {
+        const newTasks = {
+          ...prev
+        };
+        // Remove the task from the source column
+        newTasks[sourceColumnId] = newTasks[sourceColumnId].filter((t) => t._id !== taskId);
+        // Ensure the target array exists
+        if (!Array.isArray(newTasks[targetColumnId])) {
+          newTasks[targetColumnId] = [];
+        }
+        // Add the task to the target column with the new status
+        newTasks[targetColumnId] = [...newTasks[targetColumnId], {
+          ...taskToMove,
+          status: targetColumnId
+        }];
         return newTasks;
       });
 
       try {
         const token = localStorage.getItem("token");
+        // Make the API call to update the task's status in the database
         await axios.put(
-          `http://localhost:5000/api/tasks/${activeId}`,
-          { status: overId },
-          { headers: { "x-auth-token": token } }
+          `http://localhost:5000/api/tasks/${taskId}`, {
+          status: targetColumnId
+        }, {
+          headers: {
+            "x-auth-token": token
+          }
+        }
         );
       } catch (err) {
         console.error("Failed to update task status:", err);
-        fetchTasks();
+        // Revert the UI if the API call fails
+        setError("Failed to update task status. Reverting changes.");
+        setTasks(originalTasksState);
       }
     }
-    return;
-  }
-
-  // CASE 2: Reordering inside the same column (dropped on another task)
-  const targetColumnId = sourceColumnId;
-  const oldIndex = tasks[targetColumnId].findIndex(t => t._id === activeId);
-  const newIndex = tasks[targetColumnId].findIndex(t => t._id === overId);
-
-  if (oldIndex !== -1 && newIndex !== -1) {
-    setTasks(prev => ({
-      ...prev,
-      [targetColumnId]: arrayMove(prev[targetColumnId], oldIndex, newIndex),
-    }));
-  }
-};
-
-  if (loading) {
-    return <div className="text-center p-10">Loading tasks...</div>;
-  }
+  };
+  if (loading) return <div className="text-center p-10">Loading tasks...</div>;
 
   return (
     <div className="p-4 md:p-6 text-slate-900 dark:text-white">
       <div className="mb-8">
         <h1 className="text-3xl md:text-4xl font-bold">Project Dashboard</h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">
-          Welcome back! Let&apos;s get things done today. 😊
+          Welcome back! Let's get things done today. 😊
         </p>
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-600 rounded-lg">
-          {error}
-        </div>
+        <div className="mb-4 p-3 bg-red-100 text-red-600 rounded-lg">{error}</div>
       )}
 
       <DndContext collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Object.entries({
-            "To Do": "To Do ✏️",
-            "In Progress": "In Progress 🚀",
-            Completed: "Done ✅",
-          }).map(([columnId, title]) => (
-            <Column
-              key={columnId}
-              id={columnId}
-              title={title}
-              tasks={tasks[columnId]}
-              onAddTaskClick={openModal}
-              onDeleteTask={(taskId) => handleDeleteTask(columnId, taskId)}
-            />
-          ))}
+          {Object.entries({ "To Do": "To Do ✏️", "In Progress": "In Progress 🚀", Completed: "Done ✅" }).map(
+            ([columnId, title]) => (
+              <Column
+                key={columnId}
+                id={columnId}
+                title={title}
+                tasks={tasks[columnId]}
+                onAddTaskClick={openModal}
+                onDeleteTask={(columnId, taskId) => handleDeleteTask(columnId, taskId)} // 👈 This maps correctly
+              />
+            )
+          )}
         </div>
       </DndContext>
 

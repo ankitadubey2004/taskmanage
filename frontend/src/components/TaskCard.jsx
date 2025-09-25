@@ -4,7 +4,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 const TaskCard = ({ task, onDelete }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: String(task._id) }); // ✅ force id as string
+    useSortable({ id: String(task._id) });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -35,16 +35,17 @@ const TaskCard = ({ task, onDelete }) => {
     >
       <div className="flex justify-between items-start">
         <div className="flex-1">
-          <h3 className="font-bold text-lg text-slate-800 dark:text-white">
-            {task.title}
-          </h3>
-          <p className="text-gray-600 dark:text-gray-300 text-sm mt-2">
-            {task.description}
-          </p>
+          <h3 className="font-bold text-lg text-slate-800 dark:text-white">{task.title}</h3>
+          <p className="text-gray-600 dark:text-gray-300 text-sm mt-2">{task.description}</p>
         </div>
 
         <button
-          onClick={() => onDelete(task._id)}
+          onClick={(e) => {
+            e.stopPropagation();
+                console.log('Delete button clicked for task:', task._id); // Add this line
+
+            onDelete(task._id);
+          }}
           className="p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900 rounded-full transition-colors"
           aria-label="Delete task"
         >
@@ -66,9 +67,7 @@ const TaskCard = ({ task, onDelete }) => {
       </div>
 
       <div className="mt-4 flex justify-between items-center">
-        <span className="text-xs text-gray-500 dark:text-gray-400">
-          {task.deadline}
-        </span>
+        <span className="text-xs text-gray-500 dark:text-gray-400">{task.deadline}</span>
         <span
           className={`px-2 py-1 text-xs font-bold rounded-full text-white ${getPriorityClass(
             task.priority
