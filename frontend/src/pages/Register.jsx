@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios'; // Make sure you've run 'npm install axios'
 
+const API_BASE = import.meta.env.VITE_API_URL;
+
 const Register = () => {
   // 1. State to hold form data (name, email, password)
   const [formData, setFormData] = useState({
@@ -30,11 +32,8 @@ const Register = () => {
 
     try {
       // 4. API call to the backend registration route
-      const res = await axios.post('http://localhost:5000/api/auth/register', {
-        name,
-        email,
-        password,
-      });
+      const res = await axios.post(`${API_BASE}/api/auth/register`, { name, email, password });
+
 
       setSuccess(res.data.msg); // Show success message from backend
 

@@ -5,6 +5,8 @@ import { arrayMove } from "@dnd-kit/sortable";
 import Column from "../components/Column";
 import AddTaskModal from "../components/AddTaskModal.jsx";
 
+const API_BASE = import.meta.env.VITE_API_URL;
+
 const Dashboard = () => {
   const [tasks, setTasks] = useState({ "To Do": [], "In Progress": [], Completed: [] });
   const [loading, setLoading] = useState(true);
@@ -18,9 +20,7 @@ const Dashboard = () => {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("No token found. Please log in.");
 
-      const res = await axios.get("http://localhost:5000/api/tasks", {
-        headers: { "x-auth-token": token },
-      });
+      const res = await axios.get(`${API_BASE}/api/tasks`, { headers: { "x-auth-token": token } });
 
       const categorizedTasks = { "To Do": [], "In Progress": [], Completed: [] };
       res.data.forEach((task) => {
@@ -52,9 +52,8 @@ const Dashboard = () => {
       if (!token) throw new Error("No token found. Please log in.");
 
       const taskWithStatus = { ...newTask, status: columnId };
-      const res = await axios.post("http://localhost:5000/api/tasks", taskWithStatus, {
-        headers: { "x-auth-token": token },
-      });
+      const res = await axios.post(`${API_BASE}/api/tasks`, taskWithStatus, { headers: { "x-auth-token": token } });
+
 
       setTasks((prev) => ({
         ...prev,
@@ -86,9 +85,8 @@ const Dashboard = () => {
         return;
       }
 
-      await axios.delete(`http://localhost:5000/api/tasks/${taskId}`, {
-        headers: { "x-auth-token": token },
-      });
+      await axios.delete(`${API_BASE}/api/tasks/${taskId}`, { headers: { "x-auth-token": token } });
+
       console.log("Task deleted successfully!"); // Success message
     } catch (err) {
       console.error("Failed to delete task:", err.response ? err.response.data : err.message);
@@ -162,15 +160,8 @@ const Dashboard = () => {
       try {
         const token = localStorage.getItem("token");
         // Make the API call to update the task's status in the database
-        await axios.put(
-          `http://localhost:5000/api/tasks/${taskId}`, {
-          status: targetColumnId
-        }, {
-          headers: {
-            "x-auth-token": token
-          }
-        }
-        );
+        await axios.put(`${API_BASE}/api/tasks/${taskId}`, { status: targetColumnId }, { headers: { "x-auth-token": token } });
+
       } catch (err) {
         console.error("Failed to update task status:", err);
         // Revert the UI if the API call fails

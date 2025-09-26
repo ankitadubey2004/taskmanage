@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios'; // Import axios
 
+const API_BASE = import.meta.env.VITE_API_URL;
+
 // The component now accepts an `onLoginSuccess` prop from App.js
 const Login = ({ onLoginSuccess }) => {
   // Step 1: Create state to hold email and password
@@ -27,21 +29,18 @@ const Login = ({ onLoginSuccess }) => {
 
     try {
       // Step 4: Make the API call to your backend login route
-      const res = await axios.post('http://localhost:5000/api/auth/login', {
-        email,
-        password,
-      });
+      const res = await axios.post(`${API_BASE}/api/auth/login`, { email, password });
 
       // The backend sends a token on successful login
       const { token } = res.data;
-      
+
       // Step 5: Handle the successful login
       // Save the token to localStorage to keep the user logged in
       localStorage.setItem('token', token);
-      
+
       // Notify the parent component (App.js) that login was successful
       onLoginSuccess();
-      
+
       // Redirect the user to the dashboard
       navigate('/dashboard');
 
